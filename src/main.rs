@@ -11,6 +11,7 @@ use axum::{
     routing::{get, post},
     Form, Router,
 };
+use maud::{html, Markup};
 use sea_orm::{ActiveModelTrait, ActiveValue, Database, DatabaseConnection, EntityTrait, Set};
 use serde::Deserialize;
 use std::env;
@@ -67,8 +68,11 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn hello_from_srv() -> String {
-    "Hello!".to_string()
+async fn hello_from_srv() -> Markup {
+    let resp = "great".to_string();
+    html!(
+        h1 { (resp) }
+    )
 }
 
 async fn home(State(state): State<Arc<AppState>>) -> impl IntoResponse {
