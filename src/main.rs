@@ -8,6 +8,7 @@ use axum::{
     routing::{get, post},
     Form, Router,
 };
+use sea_orm::{Database, DatabaseConnection};
 use serde::Deserialize;
 use std::sync::{Arc, Mutex};
 use tower_http::services::ServeDir;
@@ -16,6 +17,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 struct AppState {
     todos: Mutex<Vec<String>>,
+    db: DatabaseConnection,
 }
 
 #[tokio::main]
@@ -29,8 +31,11 @@ async fn main() -> anyhow::Result<()> {
         .init();
     info!("initializing router...");
 
+    let db: DatabaseConnection = Database::connect("sqlite:").await?;
+
     let app_state = Arc::new(AppState {
         todos: Mutex::new(vec![]),
+        db,
     });
 
     let assets_path = std::env::current_dir().unwrap();

@@ -11,6 +11,7 @@ askama = "0.12"
 axum = { version = "0.6", features = ["macros"] }
 serde = { version = "1", features = ["serde_derive", "derive"]}
 tokio = { version = "1", features = ["full"] }
+sea-orm = { version = "0.12", features = ["sqlx-sqlite" , "runtime-tokio-rustls", "with-json", "with-uuid", "macros" ] }
 tower = "0.4"
 tower-http = { version = "0.4", features = ["fs"] }
 tracing = "0.1"
