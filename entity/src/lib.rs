@@ -2,4 +2,5 @@
 
 pub mod prelude;
 
+pub mod attachment;
 pub mod todo;

@@ -2,7 +2,7 @@ include .env
 
 .PHONY: watch.linter
 watch.linter:
-	cargo watch -s 'pnpn format'
+	cargo watch -s 'pnpm format'
 
 .PHONY: watch.tailwind
 watch.tailwind:
@@ -22,4 +22,5 @@ migrate:
 
 .PHONY: generate
 generate: fresh migrate
+	rm -rf entity/src
 	sea-orm-cli generate entity --with-serde both --serde-skip-deserializing-primary-key --lib -o entity/src
