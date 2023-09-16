@@ -6,13 +6,18 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+entity = { path = "entity" }
+migration = { path = "migration" } # depends on your needs
+
+
 anyhow = "1"
 askama = "0.12"
 axum = { version = "0.6", features = ["macros"] }
-serde = { version = "1", features = ["serde_derive", "derive"]}
+serde = { version = "1", features = ["derive"]}
 tokio = { version = "1", features = ["full"] }
 sea-orm = { version = "0.12", features = ["sqlx-sqlite" , "runtime-tokio-rustls", "with-json", "with-uuid", "macros" ] }
 tower = "0.4"
 tower-http = { version = "0.4", features = ["fs"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+dotenvy = "0.15.7"

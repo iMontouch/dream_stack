@@ -1,3 +1,6 @@
+use entity::todo;
+use entity::todo::Entity as Todo;
+
 use anyhow::Context;
 use askama::Template;
 use axum::debug_handler;
@@ -8,15 +11,15 @@ use axum::{
     routing::{get, post},
     Form, Router,
 };
-use sea_orm::{Database, DatabaseConnection};
+use sea_orm::{ActiveModelTrait, ActiveValue, Database, DatabaseConnection, EntityTrait, Set};
 use serde::Deserialize;
-use std::sync::{Arc, Mutex};
+use std::env;
+use std::sync::Arc;
 use tower_http::services::ServeDir;
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 struct AppState {
-    todos: Mutex<Vec<String>>,
     db: DatabaseConnection,
 }
 
@@ -30,13 +33,12 @@ async fn main() -> anyhow::Result<()> {
         .with(tracing_subscriber::fmt::layer())
         .init();
     info!("initializing router...");
+    dotenvy::dotenv()?;
 
-    let db: DatabaseConnection = Database::connect("sqlite:").await?;
+    let db: DatabaseConnection =
+        Database::connect(env::var("DATABASE_URL").context("DATABASE_URL not found")?).await?;
 
-    let app_state = Arc::new(AppState {
-        todos: Mutex::new(vec![]),
-        db,
-    });
+    let app_state = Arc::new(AppState { db });
 
     let assets_path = std::env::current_dir().unwrap();
 
@@ -46,7 +48,7 @@ async fn main() -> anyhow::Result<()> {
 
     let router = Router::new()
         .nest("/api", api_router)
-        .route("/", get(hello))
+        .route("/", get(home))
         .nest_service(
             "/assets",
             ServeDir::new(format!("{}/assets", assets_path.to_str().unwrap())),
@@ -69,39 +71,35 @@ async fn hello_from_srv() -> String {
     "Hello!".to_string()
 }
 
-async fn hello() -> impl IntoResponse {
-    let template = HelloTemplate {};
-    HtmlTemplate(template)
+async fn home(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    let todos: Vec<todo::Model> = Todo::find().all(&state.db).await.unwrap();
+    HtmlTemplate(HomeTemplate { todos })
 }
 
 #[derive(Template)]
-#[template(path = "hello.html")]
-struct HelloTemplate;
+#[template(path = "home.html")]
+struct HomeTemplate {
+    todos: Vec<todo::Model>,
+}
 
 #[derive(Template)]
 #[template(path = "todo-list.html")]
-struct TodoList {
-    todos: Vec<String>,
-}
-
-#[derive(Deserialize)]
-pub struct TodoRequest {
-    pub todo: String,
+struct TodoListTemplate {
+    todos: Vec<todo::Model>,
 }
 
 #[debug_handler]
 async fn add_todo(
     State(state): State<Arc<AppState>>,
-    Form(todo): Form<TodoRequest>,
+    Form(todo): Form<todo::Model>,
 ) -> impl IntoResponse {
-    let mut lock = state.todos.lock().unwrap();
-    lock.push(todo.todo);
+    let mut todo: todo::ActiveModel = todo.into();
+    // todo: figure out if there is a better way to let the pk be auto-gen
+    todo.id = ActiveValue::NotSet;
+    todo.insert(&state.db).await.unwrap();
 
-    let template = TodoList {
-        todos: lock.clone(),
-    };
-
-    HtmlTemplate(template)
+    let todos: Vec<todo::Model> = Todo::find().all(&state.db).await.unwrap();
+    HtmlTemplate(TodoListTemplate { todos })
 }
 
 /// A wrapper type that we'll use to encapsulate HTML parsed by askama into valid HTML for axum to serve.
