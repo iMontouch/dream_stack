@@ -1,3 +1,6 @@
 {% for todo in todos %}
-<p class="text-lg">{{ todo.text }}</p>
+<li>
+  <p class="text-lg">{{ todo.text }}</p>
+  <p class="text-lg">{{ todo.title }}</p>
+</li>
 {% endfor %}

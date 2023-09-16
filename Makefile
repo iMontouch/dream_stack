@@ -23,4 +23,4 @@ migrate:
 .PHONY: generate
 generate: fresh migrate
 	rm -rf entity/src
-	sea-orm-cli generate entity --with-serde both --serde-skip-deserializing-primary-key --lib -o entity/src
+	sea-orm-cli generate entity --with-serde both --lib -o entity/src

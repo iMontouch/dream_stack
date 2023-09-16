@@ -1,9 +1,9 @@
-use entity::todo;
 use entity::todo::Entity as Todo;
+use entity::todo::{self, ActiveModel};
 
 use anyhow::Context;
 use askama::Template;
-use axum::debug_handler;
+use axum::{debug_handler, Json};
 use axum::{
     extract::State,
     http::StatusCode,
@@ -13,12 +13,12 @@ use axum::{
 };
 use maud::{html, Markup};
 use sea_orm::{ActiveModelTrait, ActiveValue, Database, DatabaseConnection, EntityTrait, Set};
-use serde::Deserialize;
 use std::env;
 use std::sync::Arc;
 use tower_http::services::ServeDir;
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use uuid::Uuid;
 
 struct AppState {
     db: DatabaseConnection,
@@ -44,8 +44,9 @@ async fn main() -> anyhow::Result<()> {
     let assets_path = std::env::current_dir().unwrap();
 
     let api_router = Router::new()
-        .route("/hello", get(hello_from_srv))
-        .route("/todos", post(add_todo));
+        .route("/hello", get(inline_html))
+        .route("/todos", post(add_todo))
+        .route("/todos/new", post(todo_form));
 
     let router = Router::new()
         .nest("/api", api_router)
@@ -68,22 +69,46 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn hello_from_srv() -> Markup {
+async fn inline_html() -> Markup {
     let resp = "great".to_string();
     html!(
         h1 { (resp) }
     )
 }
 
+#[debug_handler]
 async fn home(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     let todos: Vec<todo::Model> = Todo::find().all(&state.db).await.unwrap();
-    HtmlTemplate(HomeTemplate { todos })
+    let todo = todo::Model {
+        id: Uuid::new_v4().to_string(),
+        text: "some".to_string(),
+        title: "other".to_string(),
+    };
+    HtmlTemplate(HomeTemplate { todos, todo })
 }
 
 #[derive(Template)]
 #[template(path = "home.html")]
 struct HomeTemplate {
     todos: Vec<todo::Model>,
+    todo: todo::Model,
+}
+
+async fn todo_form(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    let todos: Vec<todo::Model> = Todo::find().all(&state.db).await.unwrap();
+    let todo = todo::Model {
+        id: Uuid::new_v4().to_string(),
+        text: "some".to_string(),
+        title: "other".to_string(),
+    };
+    HtmlTemplate(TodoFormTemplate { todos, todo })
+}
+
+#[derive(Template)]
+#[template(path = "todo-form.html")]
+struct TodoFormTemplate {
+    todos: Vec<todo::Model>,
+    todo: todo::Model,
 }
 
 #[derive(Template)]
@@ -95,15 +120,19 @@ struct TodoListTemplate {
 #[debug_handler]
 async fn add_todo(
     State(state): State<Arc<AppState>>,
-    Form(todo): Form<todo::Model>,
+    Json(todo): Json<todo::Model>,
 ) -> impl IntoResponse {
-    let mut todo: todo::ActiveModel = todo.into();
-    // todo: figure out if there is a better way to let the pk be auto-gen
-    todo.id = ActiveValue::NotSet;
+    let todo: todo::ActiveModel = todo.into();
+    info!("todo: {:?}", todo);
     todo.insert(&state.db).await.unwrap();
 
     let todos: Vec<todo::Model> = Todo::find().all(&state.db).await.unwrap();
-    HtmlTemplate(TodoListTemplate { todos })
+    let todo = todo::Model {
+        id: Uuid::new_v4().to_string(),
+        text: "some".to_string(),
+        title: "other".to_string(),
+    };
+    HtmlTemplate(TodoFormTemplate { todos, todo })
 }
 
 /// A wrapper type that we'll use to encapsulate HTML parsed by askama into valid HTML for axum to serve.

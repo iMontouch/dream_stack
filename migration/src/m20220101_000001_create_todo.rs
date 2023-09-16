@@ -16,13 +16,7 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(Todo::Table)
                     .if_not_exists()
-                    .col(
-                        ColumnDef::new(Todo::Id)
-                            .integer()
-                            .not_null()
-                            .auto_increment()
-                            .primary_key(),
-                    )
+                    .col(ColumnDef::new(Todo::Id).uuid().not_null().primary_key())
                     .col(ColumnDef::new(Todo::Title).string().not_null())
                     .col(ColumnDef::new(Todo::Text).string().not_null())
                     .to_owned(),
@@ -36,9 +30,8 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(
                         ColumnDef::new(Attachment::Id)
-                            .integer()
+                            .uuid()
                             .not_null()
-                            .auto_increment()
                             .primary_key(),
                     )
                     .col(
