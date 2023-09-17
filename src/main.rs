@@ -12,6 +12,7 @@ use axum::{
     Form, Router,
 };
 use maud::{html, Markup};
+use sea_orm::prelude::DateTimeUtc;
 use sea_orm::{ActiveModelTrait, ActiveValue, Database, DatabaseConnection, EntityTrait, Set};
 use std::env;
 use std::sync::Arc;
@@ -22,6 +23,7 @@ use uuid::Uuid;
 
 struct AppState {
     db: DatabaseConnection,
+    navbar: Vec<Navigation>,
 }
 
 #[tokio::main]
@@ -39,7 +41,29 @@ async fn main() -> anyhow::Result<()> {
     let db: DatabaseConnection =
         Database::connect(env::var("DATABASE_URL").context("DATABASE_URL not found")?).await?;
 
-    let app_state = Arc::new(AppState { db });
+    let home_nav = Navigation {
+        title: "Home".to_string(),
+        href: "/".to_string(),
+    };
+    let settings = Navigation {
+        title: "Settings".to_string(),
+        href: "/".to_string(),
+    };
+    let tw_forms_ex = Navigation {
+        title: "Tailwind Forms Example".to_string(),
+        href: "/docs/tailwind/forms/examples".to_string(),
+    };
+    let tw_forms_sink = Navigation {
+        title: "Tailwind Forms Sink".to_string(),
+        href: "/docs/tailwind/forms/sink".to_string(),
+    };
+    let tw_buttons = Navigation {
+        title: "Tailwind Buttons".to_string(),
+        href: "/docs/tailwind/buttons".to_string(),
+    };
+    let navbar: Vec<Navigation> = vec![home_nav, settings, tw_forms_ex, tw_forms_sink, tw_buttons];
+
+    let app_state = Arc::new(AppState { db, navbar });
 
     let assets_path = std::env::current_dir().unwrap();
 
@@ -48,8 +72,14 @@ async fn main() -> anyhow::Result<()> {
         .route("/todos", post(add_todo))
         .route("/todos/new", post(todo_form));
 
+    let docs_router = Router::new()
+        .route("/tailwind/forms/examples", get(tailwind_forms_examples))
+        .route("/tailwind/forms/sink", get(tailwind_forms_sink))
+        .route("/tailwind/buttons", get(tailwind_buttons));
+
     let router = Router::new()
         .nest("/api", api_router)
+        .nest("/docs/", docs_router)
         .route("/", get(home))
         .nest_service(
             "/assets",
@@ -77,14 +107,67 @@ async fn inline_html() -> Markup {
 }
 
 #[debug_handler]
+async fn tailwind_buttons(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    HtmlTemplate(TailwindButtons {
+        navbar: state.navbar.clone(),
+    })
+}
+
+#[debug_handler]
+async fn tailwind_forms_sink(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    HtmlTemplate(TailwindFormsSink {
+        navbar: state.navbar.clone(),
+    })
+}
+
+#[debug_handler]
+async fn tailwind_forms_examples(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    HtmlTemplate(TailwindFormsExample {
+        navbar: state.navbar.clone(),
+    })
+}
+
+#[debug_handler]
 async fn home(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     let todos: Vec<todo::Model> = Todo::find().all(&state.db).await.unwrap();
     let todo = todo::Model {
         id: Uuid::new_v4().to_string(),
         text: "some".to_string(),
         title: "other".to_string(),
+        due_date: DateTimeUtc::default().to_string(),
     };
-    HtmlTemplate(HomeTemplate { todos, todo })
+
+    let navbar = state.navbar.clone();
+
+    HtmlTemplate(HomeTemplate {
+        todos,
+        todo,
+        navbar,
+    })
+}
+
+#[derive(Clone, Debug)]
+pub struct Navigation {
+    pub title: String,
+    pub href: String,
+}
+
+#[derive(Template)]
+#[template(path = "tailwind_buttons.html")]
+struct TailwindButtons {
+    navbar: Vec<Navigation>,
+}
+
+#[derive(Template)]
+#[template(path = "tailwind_forms_examples.html")]
+struct TailwindFormsExample {
+    navbar: Vec<Navigation>,
+}
+
+#[derive(Template)]
+#[template(path = "tailwind_forms_sink.html")]
+struct TailwindFormsSink {
+    navbar: Vec<Navigation>,
 }
 
 #[derive(Template)]
@@ -92,14 +175,25 @@ async fn home(State(state): State<Arc<AppState>>) -> impl IntoResponse {
 struct HomeTemplate {
     todos: Vec<todo::Model>,
     todo: todo::Model,
+    navbar: Vec<Navigation>,
 }
 
-async fn todo_form(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+#[debug_handler]
+async fn todo_form(
+    State(state): State<Arc<AppState>>,
+    Json(todo): Json<todo::Model>,
+) -> impl IntoResponse {
+    info!("todo: {:?}", todo);
+    let todo: todo::ActiveModel = todo.into();
+    info!("todo: {:?}", todo);
+    todo.insert(&state.db).await.unwrap();
+
     let todos: Vec<todo::Model> = Todo::find().all(&state.db).await.unwrap();
     let todo = todo::Model {
         id: Uuid::new_v4().to_string(),
         text: "some".to_string(),
         title: "other".to_string(),
+        due_date: DateTimeUtc::default().to_string(),
     };
     HtmlTemplate(TodoFormTemplate { todos, todo })
 }
@@ -131,6 +225,7 @@ async fn add_todo(
         id: Uuid::new_v4().to_string(),
         text: "some".to_string(),
         title: "other".to_string(),
+        due_date: DateTimeUtc::default().to_string(),
     };
     HtmlTemplate(TodoFormTemplate { todos, todo })
 }

@@ -1,16 +1,18 @@
 include .env
 
-.PHONY: watch.linter
-watch.linter:
-	cargo watch -s 'pnpm format'
+.PHONY: lint
+lint:
+	pnpm format
 
-.PHONY: watch.tailwind
-watch.tailwind:
-	pnpm dlx tailwindcss -i styles/tailwind.css -o assets/main.css --watch
+.PHONY: tailwind
+tailwind:
+	pnpm dlx tailwindcss -i styles/tailwind.css -o assets/main.css
 
-.PHONY: watch.debug
-watch.debug:
-	cargo watch -x run
+.PHONY: debug
+debug: generate tailwind lint
+	cargo run
+
+
 
 .PHONY: fresh
 fresh:

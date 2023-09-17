@@ -1,0 +1,65 @@
+{% extends "base.html" %} {% block title %}todo{% endblock %} {% block content
+%}
+
+<!-- component -->
+<div class="flex h-screen w-screen items-center justify-center bg-gray-100">
+  <div class="mx-auto w-full py-16">
+    <!-- Title -->
+    <h1 class="mb-6 text-center text-3xl font-bold">
+      Button Component (Default)
+    </h1>
+    <!-- End Title -->
+
+    <!-- Default -->
+    <div
+      class="mx-auto my-3 flex w-3/4 items-center rounded-md bg-white px-6 py-4 shadow"
+    >
+      <div class="mx-auto w-full text-center">
+        <button
+          type="button"
+          class="ease focus:shadow-outline m-2 select-none rounded-md border border-indigo-500 bg-indigo-500 px-4 py-2 text-white transition duration-500 hover:bg-indigo-600 focus:outline-none"
+        >
+          Primary
+        </button>
+        <button
+          type="button"
+          class="ease focus:shadow-outline m-2 select-none rounded-md border border-green-500 bg-green-500 px-4 py-2 text-white transition duration-500 hover:bg-green-600 focus:outline-none"
+        >
+          Success
+        </button>
+        <button
+          type="button"
+          class="ease focus:shadow-outline m-2 select-none rounded-md border border-red-500 bg-red-500 px-4 py-2 text-white transition duration-500 hover:bg-red-600 focus:outline-none"
+        >
+          Error
+        </button>
+        <button
+          type="button"
+          class="ease focus:shadow-outline m-2 select-none rounded-md border border-yellow-500 bg-yellow-500 px-4 py-2 text-white transition duration-500 hover:bg-yellow-600 focus:outline-none"
+        >
+          Warning
+        </button>
+        <button
+          type="button"
+          class="ease focus:shadow-outline m-2 select-none rounded-md border border-teal-500 bg-teal-500 px-4 py-2 text-white transition duration-500 hover:bg-teal-600 focus:outline-none"
+        >
+          Info
+        </button>
+        <button
+          type="button"
+          class="ease focus:shadow-outline m-2 select-none rounded-md border border-gray-700 bg-gray-700 px-4 py-2 text-white transition duration-500 hover:bg-gray-800 focus:outline-none"
+        >
+          Dark
+        </button>
+        <button
+          type="button"
+          class="ease focus:shadow-outline m-2 select-none rounded-md border border-gray-200 bg-gray-200 px-4 py-2 text-gray-700 transition duration-500 hover:bg-gray-300 focus:outline-none"
+        >
+          Light
+        </button>
+      </div>
+    </div>
+    <!-- End Default -->
+  </div>
+</div>
+{% endblock %}

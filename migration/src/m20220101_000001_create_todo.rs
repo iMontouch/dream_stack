@@ -1,7 +1,4 @@
-use sea_orm_migration::{
-    prelude::*,
-    sea_orm::{EnumIter, Iterable},
-};
+use sea_orm_migration::{prelude::*, sea_orm::EnumIter};
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -19,6 +16,7 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Todo::Id).uuid().not_null().primary_key())
                     .col(ColumnDef::new(Todo::Title).string().not_null())
                     .col(ColumnDef::new(Todo::Text).string().not_null())
+                    .col(ColumnDef::new(Todo::DueDate).date().not_null())
                     .to_owned(),
             )
             .await;
@@ -67,6 +65,7 @@ enum Todo {
     Id,
     Title,
     Text,
+    DueDate,
 }
 
 #[derive(Iden, EnumIter)]

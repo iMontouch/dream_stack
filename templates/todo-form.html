@@ -1,40 +1,70 @@
 <div id="todo-form">
-  <form
-    class="max-w-md"
-    hx-post="/api/todos/new"
-    hx-target="#todo-form"
-    hx-swap="outerHTML"
-    hx-ext="json-enc"
-  >
-    <label for="todo" class="block text-sm font-medium leading-6 text-gray-900"
-      >Todo # {{ todo.id }} -
-    </label>
-    <div class="mt-2 inline-flex flex-row space-x-2">
-      <input
-        type="text"
-        name="title"
-        id="title"
-        class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-        placeholder="{{ todo.title }}"
-      />
-      <input
-        type="text"
-        name="text"
-        id="text"
-        class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-        placeholder="{{ todo.text }}"
-      />
-      <input type="hidden" name="id" id="id" value="{{ todo.id }}" />
+  <form>
+    <div class="px-6 text-gray-900 antialiased">
+      <h2 class="text-2xl font-bold">Create new Todo Item</h2>
+      <div class="mt-8 max-w-xl">
+        <input type="hidden" value="{{ todo.id }}" name="id" />
+        <div class="grid grid-cols-1">
+          <label class="block">
+            <span class="text-gray-700">Note Title</span>
+            <input
+              type="text"
+              class="mt-1 block w-full rounded-md border-transparent bg-gray-100 focus:border-gray-500 focus:bg-white focus:ring-0"
+              placeholder=""
+              name="title"
+            />
+          </label>
+        </div>
+        <div class="grid grid-cols-2 gap-6">
+          <label class="block">
+            <span class="text-gray-700">Email address</span>
+            <input
+              type="email"
+              class="mt-1 block w-full rounded-md border-transparent bg-gray-100 focus:border-gray-500 focus:bg-white focus:ring-0"
+              placeholder="john@example.com"
+            />
+          </label>
+          <label class="block">
+            <span class="text-gray-700">Due Date</span>
+            <input
+              type="date"
+              class="mt-1 block w-full rounded-md border-transparent bg-gray-100 focus:border-gray-500 focus:bg-white focus:ring-0"
+              name="due_date"
+            />
+          </label>
+        </div>
+        <div class="grid grid-cols-1 gap-6">
+          <label class="block">
+            <span class="text-gray-700">Text</span>
+            <textarea
+              class="mt-1 block w-full rounded-md border-transparent bg-gray-100 focus:border-gray-500 focus:bg-white focus:ring-0"
+              rows="3"
+              name="text"
+            ></textarea>
+          </label>
+          <div class="block">
+            <div class="mt-2">
+              <div>
+                <label class="inline-flex items-center">
+                  <input
+                    type="checkbox"
+                    class="rounded border-transparent bg-gray-200 text-gray-700 focus:border-transparent focus:bg-gray-200 focus:ring-1 focus:ring-gray-500 focus:ring-offset-2"
+                  />
+                  <span class="ml-2">Email me news and special offers</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       <button
-        type="button"
-        hx-post="/api/todos"
+        hx-post="/api/todos/new"
         hx-target="#todo-form"
         hx-swap="outerHTML"
-        class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-      >
-        Add
-      </button>
+        hx-ext="json-enc"
+        class="button"
+      />
+      Save
     </div>
   </form>
-  <div id="todos">{% include "todo-list.html" %}</div>
 </div>
