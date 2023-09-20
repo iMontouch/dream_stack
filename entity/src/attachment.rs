@@ -3,24 +3,87 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
-#[sea_orm(table_name = "attachment")]
-pub struct Model {
-    #[sea_orm(primary_key, auto_increment = false)]
-    pub id: String,
-    pub todo: Option<i32>,
+#[derive(Copy, Clone, Default, Debug, DeriveEntity)]
+pub struct Entity;
+
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[sea_orm(rs_type = "String", db_type = "String(Some(1))")]
+pub enum AttachmentType {
+    #[sea_orm(string_value = "Pdf")]
+    Pdf,
+    #[sea_orm(string_value = "Image")]
+    Image,
+    #[sea_orm(string_value = "Excel")]
+    Excel,
+    #[sea_orm(string_value = "Csv")]
+    Csv,
+    #[sea_orm(string_value = "Zip")]
+    Zip,
 }
 
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {
-    #[sea_orm(
-        belongs_to = "super::todo::Entity",
-        from = "Column::Todo",
-        to = "super::todo::Column::Id",
-        on_update = "Cascade",
-        on_delete = "Cascade"
-    )]
+impl EntityName for Entity {
+    fn table_name(&self) -> &str {
+        "attachment"
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, DeriveModel, DeriveActiveModel, Eq, Serialize, Deserialize)]
+pub struct Model {
+    pub id: String,
+    pub todo: Option<i32>,
+    pub name: String,
+    pub url: String,
+    pub attachment_type: Option<AttachmentType>,
+}
+
+#[derive(Copy, Clone, Debug, EnumIter, DeriveColumn)]
+pub enum Column {
+    Id,
     Todo,
+    Name,
+    Url,
+    AttachmentType,
+}
+
+#[derive(Copy, Clone, Debug, EnumIter, DerivePrimaryKey)]
+pub enum PrimaryKey {
+    Id,
+}
+
+impl PrimaryKeyTrait for PrimaryKey {
+    type ValueType = String;
+    fn auto_increment() -> bool {
+        false
+    }
+}
+
+#[derive(Copy, Clone, Debug, EnumIter)]
+pub enum Relation {
+    Todo,
+}
+
+impl ColumnTrait for Column {
+    type EntityName = Entity;
+    fn def(&self) -> ColumnDef {
+        match self {
+            Self::Id => ColumnType::String(None).def(),
+            Self::Todo => ColumnType::Integer.def().null(),
+            Self::Name => ColumnType::String(None).def(),
+            Self::Url => ColumnType::String(None).def(),
+            Self::AttachmentType => ColumnType::String(None).def().null(),
+        }
+    }
+}
+
+impl RelationTrait for Relation {
+    fn def(&self) -> RelationDef {
+        match self {
+            Self::Todo => Entity::belongs_to(super::todo::Entity)
+                .from(Column::Todo)
+                .to(super::todo::Column::Id)
+                .into(),
+        }
+    }
 }
 
 impl Related<super::todo::Entity> for Entity {

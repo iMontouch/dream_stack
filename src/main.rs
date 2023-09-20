@@ -1,7 +1,7 @@
-use entity::todo::Entity as Todo;
-use entity::todo::{self, ActiveModel};
-
 use anyhow::Context;
+use entity::attachment;
+use entity::todo;
+
 use askama::Template;
 use axum::{debug_handler, Json};
 use axum::{
@@ -9,11 +9,13 @@ use axum::{
     http::StatusCode,
     response::{Html, IntoResponse, Response},
     routing::{get, post},
-    Form, Router,
+    Router,
 };
 use maud::{html, Markup};
 use sea_orm::prelude::DateTimeUtc;
-use sea_orm::{ActiveModelTrait, ActiveValue, Database, DatabaseConnection, EntityTrait, Set};
+use sea_orm::ActiveEnum;
+use sea_orm::Set;
+use sea_orm::{ActiveModelTrait, Database, DatabaseConnection, EntityTrait};
 use std::env;
 use std::sync::Arc;
 use tower_http::services::ServeDir;
@@ -106,6 +108,16 @@ async fn inline_html() -> Markup {
     )
 }
 
+async fn attachments(State(state): State<Arc<AppState>>) -> Markup {
+    let attachments: Vec<attachment::Model> =
+        attachment::Entity::find().all(&state.db).await.unwrap();
+
+    for attachment in attachments {
+        info!("Attachment ID: {:?}", attachment.attachment_type);
+    }
+    html!("he")
+}
+
 #[debug_handler]
 async fn tailwind_buttons(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     HtmlTemplate(TailwindButtons {
@@ -129,7 +141,7 @@ async fn tailwind_forms_examples(State(state): State<Arc<AppState>>) -> impl Int
 
 #[debug_handler]
 async fn home(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    let todos: Vec<todo::Model> = Todo::find().all(&state.db).await.unwrap();
+    let todos: Vec<todo::Model> = todo::Entity::find().all(&state.db).await.unwrap();
     let todo = todo::Model {
         id: Uuid::new_v4().to_string(),
         text: "some".to_string(),
@@ -188,7 +200,7 @@ async fn todo_form(
     info!("todo: {:?}", todo);
     todo.insert(&state.db).await.unwrap();
 
-    let todos: Vec<todo::Model> = Todo::find().all(&state.db).await.unwrap();
+    let todos: Vec<todo::Model> = todo::Entity::find().all(&state.db).await.unwrap();
     let todo = todo::Model {
         id: Uuid::new_v4().to_string(),
         text: "some".to_string(),
@@ -220,7 +232,7 @@ async fn add_todo(
     info!("todo: {:?}", todo);
     todo.insert(&state.db).await.unwrap();
 
-    let todos: Vec<todo::Model> = Todo::find().all(&state.db).await.unwrap();
+    let todos: Vec<todo::Model> = todo::Entity::find().all(&state.db).await.unwrap();
     let todo = todo::Model {
         id: Uuid::new_v4().to_string(),
         text: "some".to_string(),

@@ -25,4 +25,4 @@ migrate:
 .PHONY: generate
 generate: fresh migrate
 	rm -rf entity/src
-	sea-orm-cli generate entity --with-serde both --lib -o entity/src
+	sea-orm-cli generate entity --with-serde both --expanded-format --lib -o entity/src

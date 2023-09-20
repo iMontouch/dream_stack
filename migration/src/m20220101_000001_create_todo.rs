@@ -1,4 +1,7 @@
-use sea_orm_migration::{prelude::*, sea_orm::EnumIter};
+use sea_orm_migration::{
+    prelude::*,
+    sea_orm::{DeriveActiveEnum, EnumIter},
+};
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -37,6 +40,18 @@ impl MigrationTrait for Migration {
                             .integer()
                             .default(Value::Int(None)),
                     )
+                    .col(ColumnDef::new(Attachment::Name).string().not_null())
+                    .col(ColumnDef::new(Attachment::Url).string().not_null())
+                    .col(ColumnDef::new(Attachment::AttachmentType).enumeration(
+                        AttachmentType::Table,
+                        [
+                            AttachmentType::Csv,
+                            AttachmentType::Pdf,
+                            AttachmentType::Image,
+                            AttachmentType::Excel,
+                            AttachmentType::Zip,
+                        ],
+                    ))
                     .foreign_key(
                         ForeignKey::create()
                             .name("attachment_type")
@@ -73,9 +88,58 @@ enum Attachment {
     Table,
     Id,
     Todo,
-    Image,
+    Name,
+    Url,
+    AttachmentType,
+}
+
+#[derive(Debug, PartialEq, Eq, Iden, EnumIter, DeriveActiveEnum)]
+#[sea_orm(
+    rs_type = "String",
+    db_type = "String(Some(1))",
+    enum_name = "TypeAttribute"
+)]
+enum TypeAttribute {
+    #[sea_orm(string_value = "TypeAttribute")]
+    Table,
+    #[sea_orm(string_value = "Orientation")]
+    Orientation,
+    #[sea_orm(string_value = "Quality")]
+    Quality,
+    #[sea_orm(string_value = "Encoding")]
+    Encoding,
+    #[sea_orm(string_value = "Local")]
+    Local,
+    #[sea_orm(string_value = "Delimiter")]
+    Delimiter,
+    #[sea_orm(string_value = "QuoteChar")]
+    QuoteChar,
+    #[sea_orm(string_value = "Filename")]
+    Filename,
+}
+
+#[derive(Debug, PartialEq, Eq, Iden, EnumIter, DeriveActiveEnum)]
+#[sea_orm(rs_type = "String", db_type = "String(Some(1))")]
+pub enum AttachmentType {
+    #[sea_orm(string_value = "AttachmentType")]
+    Table,
+    #[sea_orm(string_value = "Pdf")]
+    #[iden = "Pdf"]
     Pdf,
-    File,
+    #[sea_orm(string_value = "Image")]
+    #[iden = "Image"]
+    Image,
+    #[sea_orm(string_value = "Excel")]
+    #[iden = "Excel"]
+    Excel,
+    #[sea_orm(string_value = "Csv")]
+    #[iden = "Csv"]
+    Csv,
+    #[sea_orm(string_value = "Zip")]
+    #[iden = "Zip"]
+    Zip,
+    #[sea_orm(string_value = "AttachmentAttribute")]
+    AttachmentAttribute,
 }
 
 #[derive(Iden, EnumIter)]
