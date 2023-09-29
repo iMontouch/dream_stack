@@ -1,8 +1,10 @@
+<button hx-get="/api/recipient_input" hx-swap="beforeend" hx-target="#new-recipients">Add Recipient</button>
 <form
   class="max-w-md"
   hx-post="/api/todos"
   hx-target="#todos"
   hx-swap="innerHTML"
+  hx-ext="json-enc"
 >
   <label for="todo" class="block text-sm font-medium leading-6 text-gray-900"
     >Todo</label
@@ -15,12 +17,18 @@
       class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
       placeholder="Replace frontend with htmx"
     />
-    <button
+    <button hx-post="/api/todos"
+  hx-target="#todos"
+  hx-swap="innerHTML"
+  hx-ext="json-enc"
       type="button"
-      class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
     >
       Add
     </button>
   </div>
+  <div id="new-recipients"></div>
 </form>
+{% for recipient in recipients %}
+  <li><span>{{ recipient.name }}</span></li>
+{% endfor %}
 <div id="todos" />

@@ -1,6 +1,6 @@
 use anyhow::Context;
 use askama::Template;
-use axum::debug_handler;
+use axum::{debug_handler, Json};
 use axum::{
     extract::State,
     http::StatusCode,
@@ -37,11 +37,13 @@ async fn main() -> anyhow::Result<()> {
 
     let api_router = Router::new()
         .route("/hello", get(hello_from_srv))
+        .route("/recipient_input", get(recipient_input))
         .route("/todos", post(add_todo));
 
     let router = Router::new()
         .nest("/api", api_router)
         .route("/", get(hello))
+        .route("/recipients", get(recipient_form))
         .nest_service(
             "/assets",
             ServeDir::new(format!("{}/assets", assets_path.to_str().unwrap())),
@@ -65,35 +67,76 @@ async fn hello_from_srv() -> String {
 }
 
 async fn hello() -> impl IntoResponse {
-    let template = HelloTemplate {};
+    let template = HelloTemplate { recipients: vec![] };
     HtmlTemplate(template)
 }
 
+async fn recipient_input() -> impl IntoResponse {
+    HtmlTemplate(RecipientInput {})
+}
+
+#[derive(Deserialize)]
+struct Recipient {
+    name: String,
+    email: String,
+}
+
+#[derive(Template)]
+#[template(path = "recipient_input.html")]
+struct RecipientInput;
+
+async fn recipient_form() -> impl IntoResponse {
+    HtmlTemplate(RecipientForm {})
+}
+
+#[derive(Template)]
+#[template(path = "recipient-form.html")]
+struct RecipientForm;
+
 #[derive(Template)]
 #[template(path = "hello.html")]
-struct HelloTemplate;
+struct HelloTemplate {
+    recipients: Vec<Recipient>,
+}
 
 #[derive(Template)]
 #[template(path = "todo-list.html")]
 struct TodoList {
     todos: Vec<String>,
+    recipients: Vec<Recipient>,
 }
 
 #[derive(Deserialize)]
 pub struct TodoRequest {
     pub todo: String,
+    name: Vec<String>,
+    email: Vec<String>,
+}
+
+impl TodoRequest {
+    fn get_recipients(&self) -> Vec<Recipient> {
+        self.name
+            .iter()
+            .zip(self.email.iter())
+            .map(|(name, email)| Recipient {
+                name: name.to_string(),
+                email: email.to_string(),
+            })
+            .collect()
+    }
 }
 
 #[debug_handler]
 async fn add_todo(
     State(state): State<Arc<AppState>>,
-    Form(todo): Form<TodoRequest>,
+    Json(todo): Json<TodoRequest>,
 ) -> impl IntoResponse {
     let mut lock = state.todos.lock().unwrap();
-    lock.push(todo.todo);
+    lock.push(todo.todo.clone());
 
     let template = TodoList {
         todos: lock.clone(),
+        recipients: todo.get_recipients(),
     };
 
     HtmlTemplate(template)

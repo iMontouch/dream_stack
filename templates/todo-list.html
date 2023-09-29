@@ -1,3 +1,6 @@
 {% for todo in todos %}
 <p class="text-lg">{{ todo }}</p>
+  {% for recipient in recipients %}
+    <li><span>{{ recipient.name }}</span></li>
+  {% endfor %}
 {% endfor %}
